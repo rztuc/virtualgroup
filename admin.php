@@ -10,6 +10,7 @@ class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
     var $users;
     var $groups;
     var $_auth = null;        // auth object
+    var $_auth_userlist = array();
     
     var $editgroup = false;
     var $edit = false;
@@ -29,6 +30,36 @@ class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
         }
 
     }
+
+    /**
+     * This function is copied from "chained" auth module, written by Grant Gardner
+     *
+     * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
+     * @author     Grant Gardner <grant@lastweekend.com.au>
+     */
+
+    function createAuth($auth_name)  {
+      
+      $auth_classfile=DOKU_INC.'inc/auth/'.$auth_name.'.class.php';
+
+      if (file_exists($auth_classfile)) {
+        require_once($auth_classfile);
+      } else {
+        nice_die("$auth_classfile does not exist");
+        return null; #not reachable
+      }
+
+
+      $auth_class = "auth_".$auth_name;
+
+      if (class_exists($auth_class)) {
+         return new $auth_class();
+      } else {
+        nice_die("Class $auth_class does not exist");
+        return null; #not reachable
+      }
+    }
+
 
     function getInfo(){
         return confToHash(dirname(__FILE__).'/plugin.info.txt');
@@ -54,7 +85,21 @@ class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
             case 'addgroup':$this->addgroup($uid);break;
             case 'editgroup':$this->editgroup($uid);break;
             case 'delgroup' :$this->delgroup($uid);break;
+            case 'search' :$this->search($uid);break;
         }
+
+    }
+
+    function search($name) {
+        if (!checkSecurityToken()) return false;
+
+        if (!empty($name)) $this->_auth_userlist = $this->_auth->retrieveUsers(0,-1,array('name'=> $name));
+#        $this->_auth_userlist = $this->_auth->retrieveUsers();
+        ptln('<pre>');
+        
+        var_dump($this->_auth_userlist);
+
+        ptln('</pre>');
 
     }
 
@@ -153,7 +198,7 @@ class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
         $this->_save();
     }
 
-function add($user) {
+    function add($user) {
         if (!checkSecurityToken()) return false;
         $grp = $_REQUEST['grp'];
         if (empty($user)) {
@@ -405,5 +450,39 @@ function add($user) {
         }
     
         ptln('</table>');
+
+        $form = new Doku_Form(array('id' => 'vg', 'action' => wl($ID)));
+        $form->addHidden('cmd', 'search');
+        $form->addHidden('sectok', getSecurityToken());
+        $form->addHidden('page', $this->getPluginName());
+        $form->addHidden('do', 'admin');
+        $form->startFieldset($this->getLang('searchuser'));
+        $form->addElement(form_makeField('text', 'uid','', $this->getLang('searchname')));
+        $form->addElement(form_makeButton('submit', '', $this->getLang('search')));
+        $form->printForm();
+
+        if (!empty($this->_auth_userlist)) {
+            ptln('<table class="inline" id="vg__show">');
+            ptln('  <tr>');
+            ptln('    <th class="user">'.hsc($this->getLang('users')).'</th>');
+            ptln('    <th class="act"> </th>');
+            ptln('  </tr>');
+            foreach ($this->_auth_userlist as $user => $userinfo) {
+                ptln('  <tr>');
+                ptln('    <td>'.hsc($user.' ('.$userinfo['name'].')').'</td>');
+                ptln('    <td class="act">');
+                ptln('      <a class="vg_edit" href="'.wl($ID,array('do'=>'admin','page'=>$this->getPluginName(),'cmd'=>'edit' ,'uid'=>$user, 'sectok'=>getSecurityToken())).'">'.hsc($this->getLang('edit')).'</a>');
+                ptln('    </td>');
+                ptln('  </tr>');
+            }
+        
+            ptln('</table>');
+        }
+
     }
+
+    function _htmlFilter($key) {
+        if (empty($this->_filter)) return '';
+        return (isset($this->_filter[$key]) ? hsc($this->_filter[$key]) : ''); 
+    }    
 }

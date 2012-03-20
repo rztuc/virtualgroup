@@ -21,6 +21,9 @@ $lang['grps'] = 'Groups';
 
 $lang['del'] = 'Delete';
 $lang['edit'] = 'Edit';
+$lang['search'] = 'Search';
+$lang['searchuser'] = 'Search for a user';
+$lang['searchname'] = 'User name (full name)';
 
 $lang['change'] = 'Change';
 
