@@ -29,3 +29,5 @@ $lang['change'] = 'Change';
 
 $lang['usercharerr'] = 'Can not save the changes. Maybe your user using a character disallowed by the authentication backend.';
 $lang['grpcharerr'] = 'Can not save the changes. Maybe your group using a character disallowed by the authentication backend.';
+
+$lang['noautherr'] = 'No working auth module found. Check your configuration.';

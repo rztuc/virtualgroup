@@ -22,13 +22,18 @@ class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
 
         $this->setupLocale();
 
-        if (isset($auth)) {
-      
-           // we're good to go
-          $this->_auth = & $auth;
-
+        if ("" != $this->getConf('auth')) {
+            $this->_auth = & $this->createAuth($this->getConf('auth'));
+        } else {
+            // we're good to go
+            $this->_auth = & $auth;
         }
+    
+        if (!isset($this->_auth)) {
 
+            msg($this->getlang('noautherr'));
+            return false;
+        }
     }
 
     /**
@@ -94,7 +99,7 @@ class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
         if (!checkSecurityToken()) return false;
 
         if (!empty($name)) $this->_auth_userlist = $this->_auth->retrieveUsers(0,-1,array('name'=> $name));
-#        $this->_auth_userlist = $this->_auth->retrieveUsers();
+    #    $this->_auth_userlist = $this->_auth->retrieveUsers();
         ptln('<pre>');
         
         var_dump($this->_auth_userlist);
@@ -394,7 +399,7 @@ class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
         ptln('    <th> </th>');
         ptln('  </tr>');
         foreach ($this->users as $user => $grps) {
-            $userdata=$this->_auth->getUserData($user);
+            //$userdata=$this->_auth->getUserData($user);
 
             ptln('  <tr>');
             ptln('    <td>'.hsc($user).(isset($userdata['name'])?hsc(' ('.$userdata['name'].')'):'').'</td>');
