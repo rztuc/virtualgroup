@@ -7,8 +7,8 @@ require_once(DOKU_INC.'inc/common.php');
 
 class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
 
-    var $users;
-    var $groups;
+    var $users=array();
+    var $groups=array();
     var $_auth = null;        // auth object
     var $_auth_userlist = array();
     
@@ -368,6 +368,7 @@ class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
      */
     function html() {
         global $ID;
+        ptln('<h1>'.$this->getLang('menu').'</h1>');
         $form = new Doku_Form(array('id' => 'vg', 'action' => wl($ID)));
         $form->addHidden('cmd', $this->edit?'edit':'add');
         $form->addHidden('sectok', getSecurityToken());
