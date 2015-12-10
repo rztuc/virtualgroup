@@ -19,50 +19,37 @@ class admin_plugin_virtualgroup extends DokuWiki_Admin_Plugin {
 
     function admin_plugin_virtualgroup () {
         global $auth;
+	global $plugin_controller;
 
         $this->setupLocale();
 
-        if ("" != $this->getConf('auth')) {
-            $this->_auth = & $this->createAuth($this->getConf('auth'));
-        } else {
-            // we're good to go
-            $this->_auth = & $auth;
-        }
+	// try to load auth backend from plugins
+	foreach ($plugin_controller->getList('auth') as $plugin) {
+	    if ($this->getConf('auth') === $plugin) {
+		    $this->_auth = $plugin_controller->load('auth', $this->getConf('auth'));
+	    }
+	}
     
-        if (!isset($this->_auth)) {
+	if ( is_null($this->_auth) || !$this->_auth->success ) {
+		
+#	echo '<pre>';
+#	print_r($this->getConf('auth'));
+#	print_r($this->_auth);
+#	echo '</pre>';
+
 
             msg($this->getlang('noautherr'));
-            return false;
+     	    // default to system wide auth plugin.
+            $this->_auth =  $auth;
         }
     }
 
     /**
-     * This function is copied from "chained" auth module, written by Grant Gardner
      *
-     * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
-     * @author     Grant Gardner <grant@lastweekend.com.au>
      */
 
     function createAuth($auth_name)  {
       
-      $auth_classfile=DOKU_INC.'inc/auth/'.$auth_name.'.class.php';
-
-      if (file_exists($auth_classfile)) {
-        require_once($auth_classfile);
-      } else {
-        nice_die("$auth_classfile does not exist");
-        return null; #not reachable
-      }
-
-
-      $auth_class = "auth_".$auth_name;
-
-      if (class_exists($auth_class)) {
-         return new $auth_class();
-      } else {
-        nice_die("Class $auth_class does not exist");
-        return null; #not reachable
-      }
     }
 
 
